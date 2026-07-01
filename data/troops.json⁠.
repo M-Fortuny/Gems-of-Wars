@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "name": "Caballero Real",
+    "type": "Humano",
+    "mana_colors": ["Azul", "Blanco"],
+    "stats": {
+      "attack": 12,
+      "defense": 15,
+      "life": 18
+    },
+    "ability": "Inflige 10 de daño y gana 5 de armadura.",
+    "image_path": "assets/cards/caballero_real.png",
+    "owned": false
+  },
+  {
+    "id": 2,
+    "name": "Dragón de las Sombras",
+    "type": "Dragón",
+    "mana_colors": ["Morado"],
+    "stats": {
+      "attack": 25,
+      "defense": 8,
+      "life": 22
+    },
+    "ability": "Crea 8 gemas moradas y explota 3 gemas aleatorias.",
+    "image_path": "assets/cards/dragon_sombras.png",
+    "owned": false
+  }
+]

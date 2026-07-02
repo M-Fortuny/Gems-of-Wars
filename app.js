@@ -1,16 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
     const contenedor = document.getElementById('lista-tropas');
+    contenedor.innerHTML = '<p>Buscando el archivo en: data/troops.json ...</p>';
 
-    // Función para obtener los datos
     async function cargarTropas() {
         try {
-            const response = await fetch('./data/troops.json');
+            // Probamos primero sin el ./
+            const response = await fetch('data/troops.json');
+            
+            if (!response.ok) {
+                throw new Error('Estado del servidor: ' + response.status);
+            }
+            
             const tropas = await response.json();
-
-            // Limpiar contenedor
             contenedor.innerHTML = '';
 
-            // Crear el HTML por cada tropa
             tropas.forEach(tropa => {
                 const div = document.createElement('div');
                 div.className = 'tropa-card';
@@ -22,8 +25,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 contenedor.appendChild(div);
             });
         } catch (error) {
-            console.error('Error cargando las tropas:', error);
-            contenedor.innerHTML = '<p>Error al cargar los datos.</p>';
+            contenedor.innerHTML = `
+                <div style="color: red; border: 1px solid red; padding: 10px;">
+                    <h3>¡Ops! Error encontrado:</h3>
+                    <p>${error.message}</p>
+                    <p>Revisa que la carpeta se llame "data" (minúsculas) y que el archivo esté dentro.</p>
+                </div>
+            `;
         }
     }
 

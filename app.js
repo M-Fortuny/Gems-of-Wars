@@ -1,39 +1,32 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const contenedor = document.getElementById('lista-tropas');
-    contenedor.innerHTML = '<p>Buscando el archivo en: data/troops.json ...</p>';
+    contenedor.innerHTML = '<p>Intentando cargar tropas...</p>';
 
-    async function cargarTropas() {
-        try {
-            // Probamos primero sin el ./
-            const response = await fetch('data/troops.json');
-            
-            if (!response.ok) {
-                throw new Error('Estado del servidor: ' + response.status);
-            }
-            
-            const tropas = await response.json();
-            contenedor.innerHTML = '';
-
-            tropas.forEach(tropa => {
-                const div = document.createElement('div');
-                div.className = 'tropa-card';
-                div.innerHTML = `
-                    <img src="${tropa.imagen_url}" alt="${tropa.nombre}">
-                    <h3>${tropa.nombre}</h3>
-                    <p>${tropa.rareza}</p>
-                `;
-                contenedor.appendChild(div);
-            });
-        } catch (error) {
-            contenedor.innerHTML = `
-                <div style="color: red; border: 1px solid red; padding: 10px;">
-                    <h3>¡Ops! Error encontrado:</h3>
-                    <p>${error.message}</p>
-                    <p>Revisa que la carpeta se llame "data" (minúsculas) y que el archivo esté dentro.</p>
-                </div>
-            `;
+    try {
+        const response = await fetch('data/troops.json');
+        
+        // Esto nos dirá si el archivo existe
+        if (!response.ok) {
+            contenedor.innerHTML = '<p style="color:red;">Error: No encuentro el archivo. Código: ' + response.status + '</p>';
+            return;
         }
-    }
 
-    cargarTropas();
+        const tropas = await response.json();
+        
+        // Si llegamos aquí, los datos se han cargado. Vamos a ver cuántos hay.
+        contenedor.innerHTML = '<p>¡Datos cargados! Cantidad: ' + tropas.length + '</p>';
+        
+        tropas.forEach(tropa => {
+            const div = document.createElement('div');
+            div.className = 'tropa-card';
+            div.innerHTML = `
+                <img src="${tropa.imagen_url}" alt="${tropa.nombre}">
+                <h3>${tropa.nombre}</h3>
+            `;
+            contenedor.appendChild(div);
+        });
+
+    } catch (error) {
+        contenedor.innerHTML = '<p style="color:red;">Error grave: ' + error.message + '</p>';
+    }
 });

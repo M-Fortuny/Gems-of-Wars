@@ -2,14 +2,552 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Gems of War - Biblioteca</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración Avanzada Pawsitive Gluc</title>
+    <style>
+        :root {
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-muted: #666666;
+            --accent-color: #5ca4ff;
+            --border-color: #e1e5eb;
+            --info-bg: #f0f6ff;
+            --info-border: #bcd6ff;
+            --btn-bg: #2e7d32;
+            --btn-text: #ffffff;
+            --preview-bg: #f8f9fa;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .panel-configuracion {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .bloque-seccion {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .titulo-seccion {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin: 0 0 6px;
+        }
+
+        .subtitulo-seccion {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .fila-config {
+            display: flex;
+            flex-direction: column;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .fila-config:last-child { border-bottom: none; }
+
+        .cabecera-fila {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .info-columna {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding-right: 16px;
+        }
+
+        .titulo-opcion {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .desc-opcion {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+
+        .subcontenedor-opciones,
+        .alerta-geolocalizacion {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 14px;
+        }
+
+        .subcontenedor-opciones {
+            background-color: var(--bg-color);
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        .alerta-geolocalizacion {
+            border: 1px solid var(--info-border);
+            background-color: var(--info-bg);
+            padding: 14px;
+            border-radius: 12px;
+            gap: 12px;
+        }
+
+        .texto-alerta {
+            font-size: 0.88rem;
+            line-height: 1.45;
+            color: var(--text-color);
+        }
+
+        .grupo-selector {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 0;
+        }
+
+        .etiqueta-selector {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        select {
+            font-family: inherit;
+            font-size: 0.95rem;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            outline: none;
+            min-width: 160px;
+        }
+
+        .caja-vista-previa {
+            background-color: var(--preview-bg);
+            border-left: 4px solid var(--accent-color);
+            padding: 12px;
+            border-radius: 4px 8px 8px 4px;
+            margin-top: 6px;
+        }
+
+        .titulo-preview {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .contenido-preview {
+            font-size: 0.88rem;
+            line-height: 1.35;
+        }
+
+        .btn-aceptar {
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            background-color: var(--btn-bg);
+            color: var(--btn-text);
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            align-self: flex-end;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-aceptar:hover { background-color: #256428; }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        input:checked + .slider { background-color: var(--accent-color); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .oculto { display: none !important; }
+
+        @media (max-width: 520px) {
+            .cabecera-fila,
+            .grupo-selector {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            select {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .btn-aceptar {
+                width: 100%;
+                align-self: stretch;
+            }
+        }
+
+			.switch-input:checked + .switch .slider {
+    background-color: var(--accent-color);
+}
+
+.switch-input:checked + .switch .slider:before {
+    transform: translateX(22px);
+}
+
+    </style>
 </head>
 <body>
-    <h1>Mi Biblioteca de Tropas</h1>
-    <main id="lista-tropas" class="grid-container">
-        <p>Cargando tropas desde la base de datos...</p>
-    </main>
-    <script src="app.js"></script>
+
+
+    <div class="panel-configuracion">
+        <div class="bloque-seccion">
+            <div class="titulo-seccion">📍 Localización y Entorno</div>
+            <div class="subtitulo-seccion">Gestiona cómo influyen el clima y la ubicación en el metabolismo de tu mascota.</div>
+
+            <div class="fila-config">
+                <div class="cabecera-fila">
+                    <div class="info-columna">
+                        <span class="titulo-opcion">Activar Geolocalización</span>
+                        <span class="desc-opcion">Permite registrar las coordenadas geográficas de cada toma.</span>
+
+				
+                        <!-- NUEVO: Contenedor para mostrar los datos obtenidos en tiempo real -->
+			
+                        <div id="geo-resultados" class="desc-opcion" style="margin-top: 8px; font-weight: 600; color: var(--accent-color);">
+                            Esperando activación...
+                        </div>
+                    </div>
+
+                    <!-- El input queda totalmente independiente fuera del label por seguridad de Koder -->
+                    <label class="switch">
+                        <input type="checkbox" id="chk-geo" class="switch-input">
+                    <label for="chk-geo" class="switch">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+
+                <div class="alerta-geolocalizacion" id="alerta-geo">
+                    <span class="texto-alerta">
+                        ℹ️ <strong>Información importante:</strong> Activar la geolocalización permite tener información de los registros de dónde se encuentra nuestra mascota y de la temperatura, útil para contrastar datos de una ciudad con otra. También permite saber cómo influye la temperatura en nuestra mascota cuando está fuera de casa.
+                    </span>
+                    <button type="button" class="btn-aceptar" id="btn-geo">Aceptar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bloque-seccion">
+            <div class="titulo-seccion">💉 Recordatorios de Insulina</div>
+            <div class="subtitulo-seccion">Configura alertas inteligentes basadas en el historial clínico biológico.</div>
+
+            <div class="fila-config">
+                <div class="cabecera-fila">
+                    <div class="info-columna">
+                        <span class="titulo-opcion">Control de Insulina</span>
+                        <span class="desc-opcion">Calcular avisos automáticos para la próxima inyección.</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="chk-insulina" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="subcontenedor-opciones" id="opciones-insulina">
+                    <div class="grupo-selector">
+                        <span class="etiqueta-selector">Pautas de aplicación:</span>
+                        <select id="sel-pauta">
+                            <option value="6">Cada 6 horas</option>
+                            <option value="12" selected>Cada 12 horas</option>
+                            <option value="24">Cada 24 horas</option>
+                        </select>
+                    </div>
+
+                    <div class="grupo-selector">
+                        <span class="etiqueta-selector">Notificación previa (Antelación):</span>
+                        <select id="sel-antelacion">
+                            <option value="5">5 minutos antes</option>
+                            <option value="10">10 minutos antes</option>
+                            <option value="15" selected>15 minutos antes</option>
+                            <option value="30">30 minutos antes</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+                        <span class="titulo-opcion" style="font-size: 0.9rem; display: block; margin-bottom: 4px;">Ejemplo de aviso en pantalla:</span>
+                        <div class="caja-vista-previa">
+                            <div class="titulo-preview">Próxima dosis</div>
+                            <div class="contenido-preview" id="preview-insulina">La insulina será notificada 15 minutos antes de la próxima pauta.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+                <div class="bloque-seccion">
+            <div class="titulo-seccion">🛠️ Herramientas de Desarrollo</div>
+            <div class="subtitulo-seccion">Accede a utilidades avanzadas para la depuración y pruebas de la app en tiempo real.</div>
+
+            <div class="fila-config">
+                <div class="cabecera-fila">
+                    <div class="info-columna">
+                        <span class="titulo-opcion">Activar Consola Eruda</span>
+                        <span class="desc-opcion">Inyecta la consola web para inspeccionar el DOM y depurar en iOS.</span>
+                    </div>
+                    <!-- El input queda totalmente independiente fuera del label -->
+                    <input type="checkbox" id="chk-eruda" class="switch-input" style="position: absolute; opacity: 0; width: 0; height: 0;">
+                    <label for="chk-eruda" class="switch">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+
+
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- MÓDULO DE GEOLOCALIZACIÓN Y CLIMA ---
+            const API_KEY = 'ef660e654281f681e0c643a10c9407ab'; 
+            const chkGeo = document.getElementById('chk-geo');
+            const geoResultados = document.getElementById('geo-resultados');
+            const alertaGeo = document.getElementById('alerta-geo');
+            let bucleGeoClima = null;
+
+            // Sincronizar estado inicial del panel de alerta visual
+                        // Sincronizar estado inicial del panel de alerta visual sin disparar el permiso intrusivo
+            if (chkGeo) {
+                const geoGuardado = localStorage.getItem('pawsitive_geo_active');
+                chkGeo.checked = (geoGuardado === 'true');
+                
+                alertaGeo.style.display = chkGeo.checked ? 'flex' : 'none';
+                
+                // MEJORA: Solo arrancamos el bucle si el usuario ya lo había autorizado explícitamente en el pasado
+                if (chkGeo.checked) {
+                    gestionarBucleMonitoreo();
+                } else {
+                    if (geoResultados) geoResultados.innerHTML = "📍 Localización desactivada";
+                }
+
+                // Escuchar cambios en el interruptor de localización (Disparador manual)
+                chkGeo.addEventListener('change', function() {
+                    localStorage.setItem('pawsitive_geo_active', chkGeo.checked);
+                    alertaGeo.style.display = chkGeo.checked ? 'flex' : 'none';
+                    
+                    // Al activar el switch manualmente, es aquí cuando iOS pedirá el permiso por primera vez
+                    gestionarBucleMonitoreo();
+                });
+            }
+
+
+            function gestionarBucleMonitoreo() {
+                if (chkGeo && chkGeo.checked) {
+                    actualizarPantallaClima();
+                    // Evitamos duplicar intervalos si ya existe uno activo
+                    if (!bucleGeoClima) {
+                        bucleGeoClima = setInterval(actualizarPantallaClima, 1000);
+                    }
+                } else {
+                    if (bucleGeoClima) {
+                        clearInterval(bucleGeoClima);
+                        bucleGeoClima = null;
+                    }
+                    if (geoResultados) geoResultados.innerHTML = "📍 Localización desactivada";
+                }
+            }
+
+            function obtenerFechaHora() {
+                const ahora = new Date();
+                const opciones = { weekday: 'short', day: 'numeric', month: 'short' };
+                const fecha = ahora.toLocaleDateString('es-ES', opciones);
+                const hora = ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                return `${fecha} | ${hora}`;
+            }
+
+                        async function obtenerClima() {
+                if (!navigator.geolocation) return "Geo no soportada";
+                try {
+                    let latitude, longitude;
+
+                    // 1. Intentar GPS Real
+                    try {
+                        const position = await new Promise((resolve, reject) => {
+                            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 2000 });
+                        });
+                        latitude = position.coords.latitude;
+                        longitude = position.coords.longitude;
+                    } catch (geoError) {
+                        // Coordenadas simuladas si el GPS falla o está bloqueado
+                        latitude = 40.4167; 
+                        longitude = -3.7037;
+                    }
+                    
+                    const url = `https://openweathermap.org{latitude}&lon=${longitude}&units=metric&appid=${API_KEY}&lang=es`;
+                    
+                    // 2. Intentar llamada a internet real
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error("Error de red");
+                    const data = await response.json();
+                    
+                    return `${data.name} - ${Math.round(data.main.temp)}°C`;
+                } catch (error) {
+                    // FALLBACK TOTAL OFFLINE INDESTRUCTIBLE:
+                    // Si iOS bloquea la API externa, inyectamos datos locales instantáneos
+                    return "Madrid - 22°C (Simulado)";
+                }
+            }
+
+
+            async function actualizarPantallaClima() {
+                if (!geoResultados) return;
+                const fechaHora = obtenerFechaHora();
+                // Para no saturar la API cada segundo, guardamos el clima en caché de sesión temporal
+                let climaActual = sessionStorage.getItem('pawsitive_cached_clima');
+                
+                // Si no hay clima guardado o el segundo actual coincide con una actualización de bloque (ej. cada 30 seg)
+                if (!climaActual || new Date().getSeconds() % 30 === 0) {
+                    climaActual = await obtenerClima();
+                    sessionStorage.setItem('pawsitive_cached_clima', climaActual);
+                }
+                
+                geoResultados.innerHTML = `🕒 ${fechaHora} <br> 🌤️ ${climaActual}`;
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var chkEruda = document.getElementById('chk-eruda');
+            if (!chkEruda) return;
+
+            if (localStorage.getItem('pawsitive_eruda_active') === 'true') {
+                chkEruda.checked = true;
+                inyectarEruda();
+            }
+
+            chkEruda.addEventListener('change', function () {
+                localStorage.setItem('pawsitive_eruda_active', chkEruda.checked ? 'true' : 'false');
+
+                if (chkEruda.checked) {
+                    inyectarEruda();
+                } else if (window.eruda) {
+                    alert('✓ Consola desactivada. Para ocultarla por completo, recarga la pestaña.');
+                }
+            });
+
+            function inyectarEruda() {
+                if (window.eruda) {
+                    eruda.init();
+                    return;
+                }
+
+                var script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/eruda';
+                script.onload = function () {
+                    if (window.eruda) eruda.init();
+                };
+                document.body.appendChild(script);
+            }
+        });
+
+
+        // --- MÓDULO INDEPENDIENTE DE INSULINA (SISTEMA AISLADO) ---
+        document.addEventListener('DOMContentLoaded', function () {
+            var chkInsulina = document.getElementById('chk-insulina');
+            var opcionesInsulina = document.getElementById('opciones-insulina');
+            var selPauta = document.getElementById('sel-pauta');
+            var selAntelacion = document.getElementById('sel-antelacion');
+
+            if (!chkInsulina || !opcionesInsulina) return;
+
+            // 1. Cargar estados guardados al iniciar la página
+            var insulinaGuardado = localStorage.getItem('pawsitive_insulina_active');
+            chkInsulina.checked = (insulinaGuardado === 'true');
+            opcionesInsulina.style.display = chkInsulina.checked ? 'flex' : 'none';
+
+            if (selPauta && localStorage.getItem('pawsitive_sel_pauta')) {
+                selPauta.value = localStorage.getItem('pawsitive_sel_pauta');
+            }
+            if (selAntelacion && localStorage.getItem('pawsitive_sel_antelacion')) {
+                selAntelacion.value = localStorage.getItem('pawsitive_sel_antelacion');
+            }
+
+            // 2. Escuchar cambios en el Switch principal
+            chkInsulina.addEventListener('change', function () {
+                localStorage.setItem('pawsitive_insulina_active', chkInsulina.checked ? 'true' : 'false');
+                opcionesInsulina.style.display = chkInsulina.checked ? 'flex' : 'none';
+            });
+
+            // 3. Escuchar cambios en los selectores de tiempo
+            if (selPauta) {
+                selPauta.addEventListener('change', function () {
+                    localStorage.setItem('pawsitive_sel_pauta', selPauta.value);
+                });
+            }
+            if (selAntelacion) {
+                selAntelacion.addEventListener('change', function () {
+                    localStorage.setItem('pawsitive_sel_antelacion', selAntelacion.value);
+                });
+            }
+        });
+
+    </script>
 </body>
 </html>

@@ -221,8 +221,8 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
         }
 
-        input:checked + .slider { background-color: var(--accent-color); }
-        input:checked + .slider:before { transform: translateX(22px); }
+        .switch input:checked + .slider { background-color: var(--accent-color); }
+        .switch input:checked + .slider:before { transform: translateX(22px); }
 
         .oculto { display: none !important; }
 
@@ -243,20 +243,9 @@
                 align-self: stretch;
             }
         }
-
-			.switch-input:checked + .switch .slider {
-    background-color: var(--accent-color);
-}
-
-.switch-input:checked + .switch .slider:before {
-    transform: translateX(22px);
-}
-
     </style>
 </head>
 <body>
-
-
     <div class="panel-configuracion">
         <div class="bloque-seccion">
             <div class="titulo-seccion">📍 Localización y Entorno</div>
@@ -267,23 +256,16 @@
                     <div class="info-columna">
                         <span class="titulo-opcion">Activar Geolocalización</span>
                         <span class="desc-opcion">Permite registrar las coordenadas geográficas de cada toma.</span>
-
-				
-                        <!-- NUEVO: Contenedor para mostrar los datos obtenidos en tiempo real -->
-			
                         <div id="geo-resultados" class="desc-opcion" style="margin-top: 8px; font-weight: 600; color: var(--accent-color);">
                             Esperando activación...
                         </div>
                     </div>
 
-                    <!-- El input queda totalmente independiente fuera del label por seguridad de Koder -->
                     <label class="switch">
-                        <input type="checkbox" id="chk-geo" class="switch-input">
-                    <label for="chk-geo" class="switch">
+                        <input type="checkbox" id="chk-geo">
                         <span class="slider"></span>
                     </label>
                 </div>
-
 
                 <div class="alerta-geolocalizacion" id="alerta-geo">
                     <span class="texto-alerta">
@@ -341,7 +323,7 @@
             </div>
         </div>
 
-                <div class="bloque-seccion">
+        <div class="bloque-seccion">
             <div class="titulo-seccion">🛠️ Herramientas de Desarrollo</div>
             <div class="subtitulo-seccion">Accede a utilidades avanzadas para la depuración y pruebas de la app en tiempo real.</div>
 
@@ -351,203 +333,175 @@
                         <span class="titulo-opcion">Activar Consola Eruda</span>
                         <span class="desc-opcion">Inyecta la consola web para inspeccionar el DOM y depurar en iOS.</span>
                     </div>
-                    <!-- El input queda totalmente independiente fuera del label -->
-                    <input type="checkbox" id="chk-eruda" class="switch-input" style="position: absolute; opacity: 0; width: 0; height: 0;">
-                    <label for="chk-eruda" class="switch">
+                    <label class="switch">
+                        <input type="checkbox" id="chk-eruda">
                         <span class="slider"></span>
                     </label>
                 </div>
             </div>
         </div>
-
-
-
+    </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_KEY = 'ef660e654281f681e0c643a10c9407ab';
+            const CACHE_KEY = 'pawsitive_cached_clima';
+            const CACHE_TS_KEY = 'pawsitive_cached_clima_ts';
+            const CACHE_TTL = 30000;
+            const GEO_UPDATE_MS = 15000;
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // --- MÓDULO DE GEOLOCALIZACIÓN Y CLIMA ---
-            const API_KEY = 'ef660e654281f681e0c643a10c9407ab'; 
             const chkGeo = document.getElementById('chk-geo');
             const geoResultados = document.getElementById('geo-resultados');
             const alertaGeo = document.getElementById('alerta-geo');
-            let bucleGeoClima = null;
+            const btnGeo = document.getElementById('btn-geo');
+            const chkEruda = document.getElementById('chk-eruda');
+            const chkInsulina = document.getElementById('chk-insulina');
+            const opcionesInsulina = document.getElementById('opciones-insulina');
+            const selPauta = document.getElementById('sel-pauta');
+            const selAntelacion = document.getElementById('sel-antelacion');
+            const previewInsulina = document.getElementById('preview-insulina');
 
-            // Sincronizar estado inicial del panel de alerta visual
-                        // Sincronizar estado inicial del panel de alerta visual sin disparar el permiso intrusivo
-            if (chkGeo) {
-                const geoGuardado = localStorage.getItem('pawsitive_geo_active');
-                chkGeo.checked = (geoGuardado === 'true');
-                
-                alertaGeo.style.display = chkGeo.checked ? 'flex' : 'none';
-                
-                // MEJORA: Solo arrancamos el bucle si el usuario ya lo había autorizado explícitamente en el pasado
-                if (chkGeo.checked) {
-                    gestionarBucleMonitoreo();
-                } else {
-                    if (geoResultados) geoResultados.innerHTML = "📍 Localización desactivada";
-                }
+            let geoInterval = null;
+            let geoFetchPromise = null;
 
-                // Escuchar cambios en el interruptor de localización (Disparador manual)
-                chkGeo.addEventListener('change', function() {
-                    localStorage.setItem('pawsitive_geo_active', chkGeo.checked);
-                    alertaGeo.style.display = chkGeo.checked ? 'flex' : 'none';
-                    
-                    // Al activar el switch manualmente, es aquí cuando iOS pedirá el permiso por primera vez
-                    gestionarBucleMonitoreo();
-                });
-            }
+            const save = (key, value) => localStorage.setItem(key, String(value));
 
+            const getDateTime = () => {
+                const now = new Date();
+                return `${now.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })} | ${now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+            };
 
-            function gestionarBucleMonitoreo() {
-                if (chkGeo && chkGeo.checked) {
-                    actualizarPantallaClima();
-                    // Evitamos duplicar intervalos si ya existe uno activo
-                    if (!bucleGeoClima) {
-                        bucleGeoClima = setInterval(actualizarPantallaClima, 1000);
-                    }
-                } else {
-                    if (bucleGeoClima) {
-                        clearInterval(bucleGeoClima);
-                        bucleGeoClima = null;
-                    }
-                    if (geoResultados) geoResultados.innerHTML = "📍 Localización desactivada";
-                }
-            }
+            const updateInsulinaPreview = () => {
+                previewInsulina.textContent = `La insulina será notificada ${selAntelacion.value} minutos antes de la pauta de cada ${selPauta.value} horas.`;
+            };
 
-            function obtenerFechaHora() {
-                const ahora = new Date();
-                const opciones = { weekday: 'short', day: 'numeric', month: 'short' };
-                const fecha = ahora.toLocaleDateString('es-ES', opciones);
-                const hora = ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                return `${fecha} | ${hora}`;
-            }
+            const getClima = async () => {
+                if (!navigator.geolocation) return 'Geo no soportada';
 
-                        async function obtenerClima() {
-                if (!navigator.geolocation) return "Geo no soportada";
                 try {
-                    let latitude, longitude;
+                    const position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+                    });
 
-                    // 1. Intentar GPS Real
-                    try {
-                        const position = await new Promise((resolve, reject) => {
-                            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 2000 });
-                        });
-                        latitude = position.coords.latitude;
-                        longitude = position.coords.longitude;
-                    } catch (geoError) {
-                        // Coordenadas simuladas si el GPS falla o está bloqueado
-                        latitude = 40.4167; 
-                        longitude = -3.7037;
-                    }
-                    
-                    const url = `https://openweathermap.org{latitude}&lon=${longitude}&units=metric&appid=${API_KEY}&lang=es`;
-                    
-                    // 2. Intentar llamada a internet real
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error("Error de red");
+                    const { latitude, longitude } = position.coords;
+                    const response = await fetch(
+                        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${API_KEY}&lang=es`
+                    );
+
+                    if (!response.ok) throw new Error('Weather request failed');
+
                     const data = await response.json();
-                    
                     return `${data.name} - ${Math.round(data.main.temp)}°C`;
-                } catch (error) {
-                    // FALLBACK TOTAL OFFLINE INDESTRUCTIBLE:
-                    // Si iOS bloquea la API externa, inyectamos datos locales instantáneos
-                    return "Madrid - 22°C (Simulado)";
+                } catch {
+                    return 'Ubicación/Clima no disponible';
                 }
-            }
+            };
 
+            const updateGeoScreen = async () => {
+                if (!chkGeo.checked) return;
 
-            async function actualizarPantallaClima() {
-                if (!geoResultados) return;
-                const fechaHora = obtenerFechaHora();
-                // Para no saturar la API cada segundo, guardamos el clima en caché de sesión temporal
-                let climaActual = sessionStorage.getItem('pawsitive_cached_clima');
-                
-                // Si no hay clima guardado o el segundo actual coincide con una actualización de bloque (ej. cada 30 seg)
-                if (!climaActual || new Date().getSeconds() % 30 === 0) {
-                    climaActual = await obtenerClima();
-                    sessionStorage.setItem('pawsitive_cached_clima', climaActual);
+                const cached = sessionStorage.getItem(CACHE_KEY);
+                const lastFetch = Number(sessionStorage.getItem(CACHE_TS_KEY) || 0);
+                const now = Date.now();
+
+                if (cached && now - lastFetch <= CACHE_TTL) {
+                    geoResultados.innerHTML = `🕒 ${getDateTime()} <br> 🌤️ ${cached}`;
+                    return;
                 }
-                
-                geoResultados.innerHTML = `🕒 ${fechaHora} <br> 🌤️ ${climaActual}`;
-            }
-        });
 
-        document.addEventListener('DOMContentLoaded', function () {
-            var chkEruda = document.getElementById('chk-eruda');
-            if (!chkEruda) return;
+                if (!geoFetchPromise) {
+                    geoFetchPromise = getClima().finally(() => {
+                        geoFetchPromise = null;
+                    });
+                }
 
-            if (localStorage.getItem('pawsitive_eruda_active') === 'true') {
-                chkEruda.checked = true;
-                inyectarEruda();
-            }
+                const clima = await geoFetchPromise;
+                sessionStorage.setItem(CACHE_KEY, clima);
+                sessionStorage.setItem(CACHE_TS_KEY, String(Date.now()));
+                geoResultados.innerHTML = `🕒 ${getDateTime()} <br> 🌤️ ${clima}`;
+            };
 
-            chkEruda.addEventListener('change', function () {
-                localStorage.setItem('pawsitive_eruda_active', chkEruda.checked ? 'true' : 'false');
+            const stopGeoUpdates = () => {
+                if (geoInterval) clearInterval(geoInterval);
+                geoInterval = null;
+            };
 
+            const startGeoUpdates = () => {
+                stopGeoUpdates();
+                updateGeoScreen();
+                geoInterval = setInterval(updateGeoScreen, GEO_UPDATE_MS);
+            };
+
+            const toggleGeo = () => {
+                save('pawsitive_geo_active', chkGeo.checked);
+                alertaGeo.style.display = chkGeo.checked ? 'flex' : 'none';
+
+                if (chkGeo.checked) {
+                    startGeoUpdates();
+                } else {
+                    stopGeoUpdates();
+                    geoResultados.textContent = '📍 Localización desactivada';
+                }
+            };
+
+            const loadEruda = () => {
+                if (window.eruda) {
+                    window.eruda.init();
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/eruda';
+                script.onload = () => window.eruda && window.eruda.init();
+                document.body.appendChild(script);
+            };
+
+            chkGeo.checked = localStorage.getItem('pawsitive_geo_active') === 'true';
+            chkEruda.checked = localStorage.getItem('pawsitive_eruda_active') === 'true';
+            chkInsulina.checked = localStorage.getItem('pawsitive_insulina_active') === 'true';
+
+            const savedPauta = localStorage.getItem('pawsitive_sel_pauta');
+            const savedAntelacion = localStorage.getItem('pawsitive_sel_antelacion');
+
+            if (savedPauta) selPauta.value = savedPauta;
+            if (savedAntelacion) selAntelacion.value = savedAntelacion;
+
+            opcionesInsulina.style.display = chkInsulina.checked ? 'flex' : 'none';
+            updateInsulinaPreview();
+
+            toggleGeo();
+            if (chkEruda.checked) loadEruda();
+
+            chkGeo.addEventListener('change', toggleGeo);
+
+            btnGeo.addEventListener('click', () => {
+                alertaGeo.style.display = 'none';
+            });
+
+            chkEruda.addEventListener('change', () => {
+                save('pawsitive_eruda_active', chkEruda.checked);
                 if (chkEruda.checked) {
-                    inyectarEruda();
+                    loadEruda();
                 } else if (window.eruda) {
                     alert('✓ Consola desactivada. Para ocultarla por completo, recarga la pestaña.');
                 }
             });
 
-            function inyectarEruda() {
-                if (window.eruda) {
-                    eruda.init();
-                    return;
-                }
-
-                var script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/eruda';
-                script.onload = function () {
-                    if (window.eruda) eruda.init();
-                };
-                document.body.appendChild(script);
-            }
-        });
-
-
-        // --- MÓDULO INDEPENDIENTE DE INSULINA (SISTEMA AISLADO) ---
-        document.addEventListener('DOMContentLoaded', function () {
-            var chkInsulina = document.getElementById('chk-insulina');
-            var opcionesInsulina = document.getElementById('opciones-insulina');
-            var selPauta = document.getElementById('sel-pauta');
-            var selAntelacion = document.getElementById('sel-antelacion');
-
-            if (!chkInsulina || !opcionesInsulina) return;
-
-            // 1. Cargar estados guardados al iniciar la página
-            var insulinaGuardado = localStorage.getItem('pawsitive_insulina_active');
-            chkInsulina.checked = (insulinaGuardado === 'true');
-            opcionesInsulina.style.display = chkInsulina.checked ? 'flex' : 'none';
-
-            if (selPauta && localStorage.getItem('pawsitive_sel_pauta')) {
-                selPauta.value = localStorage.getItem('pawsitive_sel_pauta');
-            }
-            if (selAntelacion && localStorage.getItem('pawsitive_sel_antelacion')) {
-                selAntelacion.value = localStorage.getItem('pawsitive_sel_antelacion');
-            }
-
-            // 2. Escuchar cambios en el Switch principal
-            chkInsulina.addEventListener('change', function () {
-                localStorage.setItem('pawsitive_insulina_active', chkInsulina.checked ? 'true' : 'false');
+            chkInsulina.addEventListener('change', () => {
+                save('pawsitive_insulina_active', chkInsulina.checked);
                 opcionesInsulina.style.display = chkInsulina.checked ? 'flex' : 'none';
             });
 
-            // 3. Escuchar cambios en los selectores de tiempo
-            if (selPauta) {
-                selPauta.addEventListener('change', function () {
-                    localStorage.setItem('pawsitive_sel_pauta', selPauta.value);
-                });
-            }
-            if (selAntelacion) {
-                selAntelacion.addEventListener('change', function () {
-                    localStorage.setItem('pawsitive_sel_antelacion', selAntelacion.value);
-                });
-            }
-        });
+            selPauta.addEventListener('change', () => {
+                save('pawsitive_sel_pauta', selPauta.value);
+                updateInsulinaPreview();
+            });
 
+            selAntelacion.addEventListener('change', () => {
+                save('pawsitive_sel_antelacion', selAntelacion.value);
+                updateInsulinaPreview();
+            });
+        });
     </script>
 </body>
 </html>

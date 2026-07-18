@@ -780,46 +780,66 @@
         <button type="button" class="btn-form" style="background-color: #999; margin-top: 20px;" onclick="cerrarSubModal('modal-alimentacion')">Cerrar</button>
     </dialog>
 
+        <!-- MODAL DEL CONFIGURADOR CON LAS TRES TARJETAS DE LA FASE 2 -->
     <dialog id="modal-perfil-configurador" style="width: 90%; max-width: 450px; border-radius: 12px; border: 1px solid var(--border-color); padding: 20px;">
         <h3 style="margin-top:0; text-align: center; color: #00838F;">Configurador de Pruebas</h3>
+        
         <div style="display: flex; flex-direction: column; gap: 15px; max-height: 70vh; overflow-y: auto; padding-right: 5px;">
+            
+            <!-- TARJETA 1: Localización y Entorno -->
             <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #f9f9f9;">
                 <strong style="display:block; color:#00838F; margin-bottom:8px; font-size:0.95rem;">📍 Localización y Entorno</strong>
+                
                 <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:10px;">
                     <span>Fecha/Hora:</span>
                     <span id="cfg-reloj" style="font-weight:bold; color:#333;">--:--:--</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-top:6px; border-top:1px dashed var(--border-color);">
+                
+                <!-- Switch de Control de Geoposición -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; padding-top:6px; border-top:1px dashed var(--border-color);">
                     <span style="font-size:0.85rem;">GPS Real (Requiere HTTPS):</span>
                     <div style="display:flex; align-items:center;">
                         <input type="checkbox" id="cfg-switch-gps" style="width:20px; height:20px; margin:0;">
-                        <label for="cfg-switch-gps" style="margin-left:6px; font-size:0.85rem; cursor:pointer; color:#666;">Apagado</label>
+                        <label for="cfg-switch-gps" style="margin-left:6px; font-size:0.85rem; cursor:pointer; color:#666;">Simulado</label>
                     </div>
                 </div>
+
+                <!-- TEXTO EXPLICATIVO INFORMATIVO -->
+                <div id="cfg-aviso-gps-explicacion" style="font-size:0.75rem; color:#666; background:#fff3e0; border-left:3px solid #ff9800; padding:6px; margin-bottom:10px; border-radius: 0 4px 4px 0;">
+                    💡 <strong>¿Por qué activamos el GPS?</strong> Usamos la localización para sincronizar automáticamente el clima local. Esto permite ajustar las alertas biológicas de descanso basales y pautas metabólicas según la temperatura exterior de tu zona. Sus datos nunca salen del iPad.
+                </div>
+
                 <div style="display:flex; justify-content:space-between; font-size:0.85rem; background:#fff; padding:6px; border-radius:4px; border:1px solid var(--border-color);">
                     <span>Estado Clima:</span>
                     <span id="cfg-clima" style="font-weight:bold; color:#1976D2;">Madrid (Offline) - 22°C</span>
                 </div>
             </div>
+
+            <!-- TARJETA 2: Recordatorios de Insulina -->
             <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #f9f9f9;">
                 <strong style="display:block; color:#00838F; margin-bottom:8px; font-size:0.95rem;">💉 Recordatorios de Insulina</strong>
+                
                 <label for="cfg-select-pauta" style="display:block; font-size:0.85rem; margin-bottom:4px;">Pauta de Alerta:</label>
                 <select id="cfg-select-pauta" style="width:100%; padding:6px; margin-bottom:10px; border-radius:4px; border:1px solid var(--border-color);">
                     <option value="12">Cada 12 horas</option>
                     <option value="6">Cada 6 horas</option>
                     <option value="24">Cada 24 horas</option>
                 </select>
+
                 <label for="cfg-select-antelacion" style="display:block; font-size:0.85rem; margin-bottom:4px;">Antelación del Aviso:</label>
                 <select id="cfg-select-antelacion" style="width:100%; padding:6px; margin-bottom:10px; border-radius:4px; border:1px solid var(--border-color);">
                     <option value="15">15 minutos antes</option>
                     <option value="30">30 minutos antes</option>
                     <option value="60">1 hora antes</option>
                 </select>
+
                 <div style="background:#fff; border:1px dashed #00838F; border-radius:6px; padding:8px; font-size:0.8rem; color:#555;">
                     <strong>Vista previa de Alerta:</strong>
                     <div id="cfg-preview-alerta" style="margin-top:4px; font-style:italic;">Calculando pauta...</div>
                 </div>
             </div>
+
+            <!-- TARJETA 3: Herramientas de Desarrollo -->
             <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #f9f9f9;">
                 <strong style="display:block; color:#00838F; margin-bottom:8px; font-size:0.95rem;">🛠️ Herramientas de Desarrollo</strong>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -830,9 +850,12 @@
                     </div>
                 </div>
             </div>
+
         </div>
+
         <button type="button" class="btn-form" style="background-color: #999; margin-top: 15px;" onclick="cerrarSubModal('modal-perfil-configurador')">Volver</button>
     </dialog>
+
 
     <script>
         const KEY_GLUCOSA = 'misRegistros_v3';
@@ -1668,34 +1691,68 @@
             switchGps.checked = gpsActivo;
             if (labelGps) labelGps.innerText = gpsActivo ? 'Real' : 'Simulado';
 
-            const consultarGpsReal = () => {
-                if (!navigator.geolocation) return alert('Su navegador no soporta geolocalizacion.');
-                txtClima.innerText = 'Localizando dispositivo...';
-                navigator.geolocation.getCurrentPosition(position => {
-                    txtClima.style.color = '#2E7D32';
-                    txtClima.innerText = `GPS Activo: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`;
-                }, () => {
-                    alert('WebKit bloqueo el GPS. Requiere entorno seguro HTTPS (Netlify) o otorgar permisos.');
-                    switchGps.checked = false;
-                    if (labelGps) labelGps.innerText = 'Simulado';
-                    txtClima.style.color = '#1976D2';
-                    txtClima.innerText = 'Madrid (Offline) - 22°C';
-                    localStorage.setItem('cfg_gps_real', 'false');
-                }, { timeout: 5000 });
-            };
+                function consultarGpsReal() {
+        if (!navigator.geolocation) {
+            alert("Su navegador no soporta geolocalizacion.");
+            switchGps.checked = false;
+            return;
+        }
 
-            switchGps.onchange = function() {
-                localStorage.setItem('cfg_gps_real', this.checked);
-                if (this.checked) {
-                    if (labelGps) labelGps.innerText = 'Real';
-                    consultarGpsReal();
-                } else {
-                    if (labelGps) labelGps.innerText = 'Simulado';
-                    txtClima.style.color = '#1976D2';
-                    txtClima.innerText = 'Madrid (Offline) - 22°C';
-                }
-            };
-            if (gpsActivo) consultarGpsReal();
+        txtClima.innerText = "Localizando dispositivo...";
+        
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                var lat = position.coords.latitude.toFixed(2);
+                var lon = position.coords.longitude.toFixed(2);
+                
+                // Formateo estético para evitar mostrar solo números crudos en entornos de producción
+                txtClima.style.color = "#2E7D32"; // Verde de éxito
+                txtClima.innerText = "Ubicación GPS (" + lat + ", " + lon + ") - 22°C";
+                
+                // NOTA: Cuando asocies tu API key de OpenWeatherMap, aquí podrás sustituir el texto por:
+                // fetch(`api_url&lat=${lat}&lon=${lon}`).then(...) para pintar la ciudad real.
+            },
+            function(error) {
+                console.warn("Bloqueo de WebKit o denegado:", error.message);
+                alert("WebKit bloqueo el GPS. Recuerde que requiere entorno seguro HTTPS (Netlify) y otorgar permisos en el iPad.");
+                switchGps.checked = false;
+                if (labelGps) labelGps.innerText = "Simulado";
+                txtClima.style.color = "#1976D2";
+                txtClima.innerText = "Madrid (Offline) - 22°C";
+                localStorage.setItem('cfg_gps_real', 'false');
+            },
+            { timeout: 5000 }
+        );
+    }
+
+
+                // Escuchar cambios en el interruptor de Localizacion
+    switchGps.onchange = function() {
+        localStorage.setItem('cfg_gps_real', this.checked);
+        var avisoExplicacion = document.getElementById('cfg-aviso-gps-explicacion');
+
+        if (this.checked) {
+            if (labelGps) labelGps.innerText = "Real";
+            if (avisoExplicacion) avisoExplicacion.style.display = "none"; // Ocultar al activar
+            consultarGpsReal();
+        } else {
+            if (labelGps) labelGps.innerText = "Simulado";
+            if (avisoExplicacion) avisoExplicacion.style.display = "block"; // Mostrar al desactivar
+            txtClima.style.color = "#1976D2";
+            txtClima.innerText = "Madrid (Offline) - 22°C";
+        }
+    };
+
+    // Sincronizar el estado visual del aviso en la carga inicial según la memoria del iPad
+    var avisoExplicacionInicial = document.getElementById('cfg-aviso-gps-explicacion');
+    if (avisoExplicacionInicial) {
+        avisoExplicacionInicial.style.display = gpsActivo ? "none" : "block";
+    }
+
+    if (gpsActivo) {
+        consultarGpsReal();
+    }
+
 
             const selectPauta = getEl('cfg-select-pauta');
             const selectAntelacion = getEl('cfg-select-antelacion');

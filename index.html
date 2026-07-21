@@ -166,6 +166,59 @@
         #contenedor-grafico { background: var(--card-bg); padding: 15px; border-radius: 20px; margin-bottom: 20px; width: 100%; height: 300px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: none; box-sizing: border-box; border: 1px solid var(--border-color); }
         #contenedor-grafico canvas { width: 100% !important; height: 100% !important; }
 
+
+
+
+/* Contenedor relativo en modo horizontal para anclar los controles flotantes */
+@media (orientation: landscape) {
+    #contenedor-grafico {
+        position: relative !important;
+        height: 100vh !important; /* Ocupa toda la altura de la pantalla en horizontal */
+        width: 100vw !important;
+        max-height: none !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        padding: 10px !important;
+        z-index: 9999;
+    }
+}
+
+/* Contenedor general para los controles flotantes en horizontal */
+.controles-flotantes-horizontal {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    right: 15px;
+    display: none; /* Se activa por JS o CSS en landscape */
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none; /* Permite hacer clic a través del contenedor si hay espacios vacíos */
+    z-index: 10000;
+}
+
+@media (orientation: landscape) {
+    .controles-flotantes-horizontal {
+        display: flex;
+    }
+}
+
+/* Bloques internos: Izquierda (Insulina/Factores) y Derecha (D-S-M) */
+.controles-flotantes-horizontal > * {
+    pointer-events: auto; /* Reactiva los clics en los botones e inputs */
+    background: rgba(var(--card-bg-rgb, 255, 255, 255), 0.85);
+    backdrop-filter: blur(5px);
+    padding: 6px 12px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+}
+
+
+
+
+
+
         /* ⬇️ ACORDEONES Y SECCIONES COLAPSABLES ⬇️ */
         .header-colapsable {
             display: flex;
@@ -699,8 +752,40 @@
     </div>
 
     <section id="contenedor-grafico">
-        <canvas id="miGrafica"></canvas>
-    </section>
+    <canvas id="miGrafica"></canvas>
+    
+    <!-- Controles flotantes exclusivos para el modo horizontal -->
+    <div class="controles-flotantes-horizontal">
+        <!-- Izquierda: Diseño limpio 100% simétrico a la derecha -->
+<div class="selector-matriz" style="margin: 0; background: transparent; border: none; box-shadow: none; display: flex; gap: 5px; position: relative;">
+    
+    <!-- Botones limpios como etiquetas span para no romper tu CSS -->
+    <span id="filtro-flotante-insulina" class="opcion-tipo" onclick="toggleInsulinaHorizontal()">I</span>
+    <span id="filtro-flotante-factores" class="opcion-tipo" onclick="toggleMenuFactoresHorizontal()">F ▾</span>
+    
+    <!-- Menú flotante (al ser position: absolute, no rompe el contenedor) -->
+    <div id="menu-factores-desplegable" style="display: none; position: absolute; top: 120%; left: 0; background: var(--card-bg, #fff); border: 1px solid var(--border-color); border-radius: 12px; padding: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.15); z-index: 10005; min-width: 180px; max-height: 200px; overflow-y: auto;">
+        <div style="font-size: 11px; font-weight: bold; margin-bottom: 5px; color: var(--h1-color); padding: 2px 5px;">Seleccionar Factor:</div>
+        <div id="lista-factores-opciones">
+            <!-- Se rellenará dinámicamente con JS -->
+        </div>
+    </div>
+    
+</div>
+
+
+
+        <!-- Derecha: Filtros de tiempo INDEPENDIENTES para el gráfico (D, S, M, Todo) -->
+<div class="selector-matriz" style="margin: 0; background: transparent; border: none; box-shadow: none; display: flex; gap: 5px;">
+    <span id="btn-horiz-D" class="opcion-tiempo activo" onclick="cambiarFiltroTiempoHorizontal('D')" style="cursor: pointer;">D</span>
+    <span id="btn-horiz-S" class="opcion-tiempo" onclick="cambiarFiltroTiempoHorizontal('S')" style="cursor: pointer;">S</span>
+    <span id="btn-horiz-M" class="opcion-tiempo" onclick="cambiarFiltroTiempoHorizontal('M')" style="cursor: pointer;">M</span>
+    <span id="btn-horiz-T" class="opcion-tiempo" onclick="cambiarFiltroTiempoHorizontal('T')" style="cursor: pointer;">Todo</span>
+</div>
+
+
+</section>
+
 
     <section class="bloque-ajustado seccion-vertical">
         <div class="header-colapsable" onclick="toggleSeccion('acordeon-historial', 'icono-historial')">
@@ -2378,94 +2463,120 @@ window.toggleSeccion = function(containerId, iconId) {
             actualizarInterfaz();
         };
 
+
+
                 function filtrarRegistros(registros, fTiempo, fTipo) {
-            function obtenerDiaVeterinario(fechaStr, horaStr) {
-                if (!fechaStr || !horaStr || typeof fechaStr !== 'string') return '1970-01-01';
-                
-                const partesHora = horaStr.split(':');
-                const horas = parseInt(partesHora[0], 10) || 0;
-                
-                if (horas < 8) {
-                    const partesFecha = fechaStr.split('-');
-                    if (partesFecha.length !== 3) return fechaStr; 
-                    
-                    const anio = parseInt(partesFecha[0], 10);
-                    const mes = parseInt(partesFecha[1], 10);
-                    const dia = parseInt(partesFecha[2], 10);
-                    
-                    const fechaObj = new Date(anio, mes - 1, dia);
-                    fechaObj.setDate(fechaObj.getDate() - 1);
-                    
-                    const rAnio = fechaObj.getFullYear();
-                    const rMes = String(fechaObj.getMonth() + 1).padStart(2, '0');
-                    const rDia = String(fechaObj.getDate()).padStart(2, '0');
-                    return `${rAnio}-${rMes}-${rDia}`;
-                }
-                return fechaStr;
-            }
-
-            if (!Array.isArray(registros) || registros.length === 0) return [];
-
-            const ahora = new Date();
-            const hoyISO = `${ahora.getFullYear()}-${String(ahora.getMonth()+1).padStart(2,'0')}-${String(ahora.getDate()).padStart(2,'0')}`;
-            const hoyHora = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
+    // Helper para determinar el "Día Veterinario" (El cambio de día ocurre a las 08:00 AM)
+    function obtenerDiaVeterinario(fechaStr, horaStr) {
+        if (!fechaStr || !horaStr || typeof fechaStr !== 'string') return '1970-01-01';
+        
+        const partesHora = horaStr.split(':');
+        const horas = parseInt(partesHora[0], 10) || 0;
+        
+        // Si es antes de las 08:00 AM, pertenece al ciclo del día anterior
+        if (horas < 8) {
+            const partesFecha = fechaStr.split('-');
+            if (partesFecha.length !== 3) return fechaStr; 
             
-            // ⚓ ANCLA INTELIGENTE: Si el filtro es Diario pero no hay nada hoy, buscamos el último día activo
-            let diaVeterinarioReferencia = obtenerDiaVeterinario(hoyISO, hoyHora);
-
-            if (fTiempo === 'D' || fTiempo === 'D_AYER') {
-                // Comprobamos de forma aislada si existe algún registro que pertenezca al día de hoy calendario
-                const tieneDatosHoy = registros.some(r => r && r.fecha === hoyISO);
-                
-                // Si no hay ningún dato hoy, escaneamos el historial para anclarnos al último día real con registros
-                if (!tieneDatosHoy) {
-                    // Creamos una copia rápida para no desordenar el array principal de memoria
-                    const copiaParaFechas = [...registros].filter(r => r && r.fecha && r.hora);
-                    if (copiaParaFechas.length > 0) {
-                        // Ordenamos cronológicamente para extraer la fecha del registro más reciente del historial
-                        copiaParaFechas.sort((a, b) => new Date(`${b.fecha}T${b.hora}:00`) - new Date(`${a.fecha}T${a.hora}:00`));
-                        const ultimoRegistroReal = copiaParaFechas[0];
-                        
-                        // Forzamos a que ese día real (ej: 15 de julio) sea el día de referencia
-                        diaVeterinarioReferencia = obtenerDiaVeterinario(ultimoRegistroReal.fecha, ultimoRegistroReal.hora);
-                        console.log(`🛡️ Pawsitive Guard: Historial vacío hoy. Anclado automáticamente al último ciclo real del: ${diaVeterinarioReferencia}`);
-                    }
-                }
-            }
-
-            return registros.filter(r => {
-                if (!r || !r.fecha || !r.hora) return false;
-
-                let pasaTiempo = false;
-                if (fTiempo === 'T') {
-                    pasaTiempo = true;
-                } else {
-                    const registroDiaVet = obtenerDiaVeterinario(r.fecha, r.hora);
-                    const fechaRef = new Date(`${diaVeterinarioReferencia}T00:00:00`);
-                    const fechaReg = new Date(`${registroDiaVet}T00:00:00`); 
-                    const diffDays = Math.round((fechaRef - fechaReg) / (1000 * 60 * 60 * 24));
-                    
-                    if (fTiempo === 'D') pasaTiempo = (diffDays === 0); 
-                    else if (fTiempo === 'D_AYER') pasaTiempo = (diffDays === 1); 
-                    else if (fTiempo === 'S') pasaTiempo = (diffDays >= 0 && diffDays <= 7); 
-                    else if (fTiempo === 'M') pasaTiempo = (diffDays >= 0 && diffDays <= 30);
-                }
-
-                let pasaTipo = false;
-                const tipoEfectivo = r.tipo || 'glucosa'; 
-                if (fTipo === 'Todo') {
-                    pasaTipo = true;
-                } else if (fTipo === 'G' && tipoEfectivo === 'glucosa') {
-                    pasaTipo = true;
-                } else if (fTipo === 'I' && (tipoEfectivo === 'insulina' || tipoEfectivo === 'Insulina')) {
-                    pasaTipo = true;
-                } else if (fTipo === 'F' && tipoEfectivo === 'factor') {
-                    pasaTipo = true;
-                }
-
-                return pasaTiempo && pasaTipo;
-            });
+            const anio = parseInt(partesFecha[0], 10);
+            const mes = parseInt(partesFecha[1], 10);
+            const dia = parseInt(partesFecha[2], 10);
+            
+            const fechaObj = new Date(anio, mes - 1, dia);
+            fechaObj.setDate(fechaObj.getDate() - 1);
+            
+            const rAnio = fechaObj.getFullYear();
+            const rMes = String(fechaObj.getMonth() + 1).padStart(2, '0');
+            const rDia = String(fechaObj.getDate()).padStart(2, '0');
+            return `${rAnio}-${rMes}-${rDia}`;
         }
+        return fechaStr;
+    }
+
+    if (!Array.isArray(registros) || registros.length === 0) return [];
+
+    const ahora = new Date();
+    const hoyISO = `${ahora.getFullYear()}-${String(ahora.getMonth()+1).padStart(2,'0')}-${String(ahora.getDate()).padStart(2,'0')}`;
+    const hoyHora = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
+    
+    // ⚓ ANCLA INTELIGENTE PARA EL MODO D Y D_AYER
+    let diaVeterinarioReferencia = obtenerDiaVeterinario(hoyISO, hoyHora);
+
+    if (fTiempo === 'D' || fTiempo === 'D_AYER') {
+        const tieneDatosHoy = registros.some(r => r && r.fecha === hoyISO);
+        
+        if (!tieneDatosHoy) {
+            const copiaParaFechas = [...registros].filter(r => r && r.fecha && r.hora);
+            if (copiaParaFechas.length > 0) {
+                copiaParaFechas.sort((a, b) => new Date(`${b.fecha}T${b.hora}:00`) - new Date(`${a.fecha}T${a.hora}:00`));
+                const ultimoRegistroReal = copiaParaFechas[0];
+                diaVeterinarioReferencia = obtenerDiaVeterinario(ultimoRegistroReal.fecha, ultimoRegistroReal.hora);
+                console.log(`🛡️ Pawsitive Guard: Historial vacío hoy. Anclado al ciclo del: ${diaVeterinarioReferencia}`);
+            }
+        }
+    }
+
+    // --- CÁLCULO DE LIMITES PARA SEMANA Y MES DIVERGENTES ---
+    // Semana: Lunes 00:00:00 a Domingo 23:59:59
+    const diaSemana = ahora.getDay(); 
+    const distanciaLunes = (diaSemana === 0 ? -6 : 1 - diaSemana);
+    const lunesSemana = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + distanciaLunes, 0, 0, 0, 0);
+    const domingoSemana = new Date(lunesSemana);
+    domingoSemana.setDate(lunesSemana.getDate() + 6);
+    domingoSemana.setHours(23, 59, 59, 999);
+
+    // Mes: Día 1 00:00:00 al Último día del mes 23:59:59
+    const primerDiaMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1, 0, 0, 0, 0);
+    const ultimoDiaMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    return registros.filter(r => {
+        if (!r || !r.fecha || !r.hora) return false;
+
+        // 1. FILTRADO TEMPORAL
+        let pasaTiempo = false;
+
+        if (fTiempo === 'T' || fTiempo === 'Todo') {
+            pasaTiempo = true;
+        } else if (fTiempo === 'D') {
+            const regDiaVet = obtenerDiaVeterinario(r.fecha, r.hora);
+            pasaTiempo = (regDiaVet === diaVeterinarioReferencia);
+        } else if (fTiempo === 'D_AYER') {
+            const regDiaVet = obtenerDiaVeterinario(r.fecha, r.hora);
+            const fechaRef = new Date(`${diaVeterinarioReferencia}T00:00:00`);
+            fechaRef.setDate(fechaRef.getDate() - 1);
+            const ayerISO = `${fechaRef.getFullYear()}-${String(fechaRef.getMonth()+1).padStart(2,'0')}-${String(fechaRef.getDate()).padStart(2,'0')}`;
+            pasaTiempo = (regDiaVet === ayerISO);
+        } else if (fTiempo === 'S') {
+            const [a, m, d] = r.fecha.split('-').map(Number);
+            const fechaReg = new Date(a, m - 1, d);
+            pasaTiempo = (fechaReg >= lunesSemana && fechaReg <= domingoSemana);
+        } else if (fTiempo === 'M') {
+            const [a, m, d] = r.fecha.split('-').map(Number);
+            const fechaReg = new Date(a, m - 1, d);
+            pasaTiempo = (fechaReg >= primerDiaMes && fechaReg <= ultimoDiaMes);
+        } else if (fTiempo === 'A') {
+            const anioReg = parseInt(r.fecha.split('-')[0], 10);
+            pasaTiempo = (anioReg === ahora.getFullYear());
+        }
+
+        // 2. FILTRADO POR TIPO
+        let pasaTipo = false;
+        const tipoEfectivo = (r.tipo || 'glucosa').toLowerCase();
+        
+        if (fTipo === 'Todo' || !fTipo) {
+            pasaTipo = true;
+        } else if (fTipo === 'G' && tipoEfectivo === 'glucosa') {
+            pasaTipo = true;
+        } else if (fTipo === 'I' && (tipoEfectivo === 'insulina' || r.dosis || r.insulina)) {
+            pasaTipo = true;
+        } else if (fTipo === 'F' && (tipoEfectivo === 'factor' || r.factor || r.evento)) {
+            pasaTipo = true;
+        }
+
+        return pasaTiempo && pasaTipo;
+    });
+}
+
 
 
         function calcularDiagnosticoIA(regs, perfil) {
@@ -2745,58 +2856,115 @@ window.toggleSeccion = function(containerId, iconId) {
         }
 
         function renderizarGrafica(datos) {
-            const datosGlucosa = datos.filter(d => d.valor && (!d.tipo || d.tipo === 'glucosa'));
+    if (!datos || !Array.isArray(datos)) return;
 
-            datosGlucosa.sort((a, b) => {
-                const timestampA = new Date(`${a.fecha}T${a.hora}:00`);
-                const timestampB = new Date(`${b.fecha}T${b.hora}:00`);
-                return timestampA - timestampB;
-            });
+    // 1. Filtrar y ordenar datos de Glucosa (Línea base)
+    const datosGlucosa = datos.filter(d => d.valor && (!d.tipo || d.tipo === 'glucosa'));
 
-            const ctx = document.getElementById('miGrafica').getContext('2d');
-            
-            const esModoOscuro = document.body.classList.contains('theme-dark');
-            const colorCuadricula = esModoOscuro ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)';
-            const colorTextosEjes = esModoOscuro ? '#B0B0B0' : '#666666';
-            
-            if (chartInstance) { chartInstance.destroy(); }
-            
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: datosGlucosa.map(d => {
-                        const [anio, mes, dia] = d.fecha.split('-');
-                        return `${dia}/${mes}/${anio.slice(2)} (${d.hora})`;
-                    }),
-                    datasets: [{
-                        label: 'Evolución Glucosa (mg/dL)',
-                        data: datosGlucosa.map(d => d.valor),
-                        borderColor: '#5CA4FF', 
-                        backgroundColor: 'transparent', 
-                        tension: 0.2,
-                        fill: false,
-                        borderWidth: 3,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#5CA4FF'
-                    }]
+    datosGlucosa.sort((a, b) => {
+        const timestampA = new Date(`${a.fecha}T${a.hora}:00`);
+        const timestampB = new Date(`${b.fecha}T${b.hora}:00`);
+        return timestampA - timestampB;
+    });
+
+    // Helper para formatear etiquetas (Eje X)
+    const formatearEtiqueta = (d) => {
+        const [anio, mes, dia] = d.fecha.split('-');
+        return `${dia}/${mes}/${anio.slice(2)} (${d.hora})`;
+    };
+
+    const labels = datosGlucosa.map(formatearEtiqueta);
+
+    // 2. Extraer eventos de Insulina y Factores
+    const datosInsulina = datos.filter(d => d.tipo === 'insulina' || d.dosis || d.insulina);
+    const datosFactores = datos.filter(d => d.tipo === 'factor' || d.factor || d.evento);
+
+    // Mapear capas flotantes sobre las coordenadas de glucosa existentes
+    const puntosInsulina = datosGlucosa.map(g => {
+        const coint = datosInsulina.find(i => i.fecha === g.fecha && i.hora === g.hora);
+        return coint ? g.valor : null;
+    });
+
+    const puntosFactores = datosGlucosa.map(g => {
+        const coint = datosFactores.find(f => f.fecha === g.fecha && f.hora === g.hora);
+        return coint ? g.valor : null;
+    });
+
+    const ctx = document.getElementById('miGrafica').getContext('2d');
+    
+    const esModoOscuro = document.body.classList.contains('theme-dark');
+    const colorCuadricula = esModoOscuro ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)';
+    const colorTextosEjes = esModoOscuro ? '#B0B0B0' : '#666666';
+    
+    if (chartInstance) { chartInstance.destroy(); }
+    
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                // Capa 1: Glucosa (Línea Verde)
+                {
+                    label: 'Glucosa (mg/dL)',
+                    data: datosGlucosa.map(d => d.valor),
+                    borderColor: '#28A745', 
+                    backgroundColor: 'transparent', 
+                    tension: 0.2,
+                    fill: false,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#28A745',
+                    order: 3
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false, 
-                    scales: { 
-                        y: { 
-                            beginAtZero: false,
-                            grid: { color: colorCuadricula }, 
-                            ticks: { color: colorTextosEjes } 
-                        },
-                        x: {
-                            grid: { color: colorCuadricula },
-                            ticks: { color: colorTextosEjes }
-                        }
-                    }
+                // Capa 2: Insulina (Puntos Azules Flotantes)
+                {
+                    label: 'Insulina',
+                    data: puntosInsulina,
+                    borderColor: '#5CA4FF',
+                    backgroundColor: '#5CA4FF',
+                    showLine: false, // Scatter mode
+                    pointRadius: 7,
+                    pointHoverRadius: 9,
+                    pointStyle: 'circle',
+                    order: 1
+                },
+                // Capa 3: Factores (Rombos Rojos Flotantes)
+                {
+                    label: 'Factores / Eventos',
+                    data: puntosFactores,
+                    borderColor: '#FF5252',
+                    backgroundColor: '#FF5252',
+                    showLine: false, // Scatter mode
+                    pointRadius: 7,
+                    pointHoverRadius: 9,
+                    pointStyle: 'rectRot', // Forma de diamante
+                    order: 2
                 }
-            });
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, 
+            plugins: {
+                legend: {
+                    display: false // Interfaz limpia sin ruido visual
+                }
+            },
+            scales: { 
+                y: { 
+                    beginAtZero: false,
+                    grid: { color: colorCuadricula }, 
+                    ticks: { color: colorTextosEjes } 
+                },
+                x: {
+                    grid: { color: colorCuadricula },
+                    ticks: { color: colorTextosEjes }
+                }
+            }
         }
+    });
+}
+
 
         const mediaQueryLandscape = window.matchMedia('(orientation: landscape) and (max-device-width: 950px), (orientation: landscape) and (max-height: 550px)');
 
@@ -2845,13 +3013,175 @@ window.toggleSeccion = function(containerId, iconId) {
             setTimeout(() => manejarCambioOrientacion(mediaQueryLandscape), 300); 
         }
 
-        document.addEventListener('focusin', function(e) {
+                document.addEventListener('focusin', function(e) {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
                 setTimeout(function() {
                     e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 300); 
             }
         });
+
+                // --- LÓGICA DE BOTONES FLOTANTES (MODO HORIZONTAL) ---
+        let insulinaHorizontalActiva = false;
+        let factorHorizontalSeleccionado = null;
+        let filtroTiempoHorizontal = 'D'; // Tiempo independiente
+
+        // Nueva función exclusiva para el tiempo horizontal
+        function cambiarFiltroTiempoHorizontal(filtro) {
+            filtroTiempoHorizontal = filtro;
+            ['D', 'S', 'M', 'T'].forEach(t => {
+                const btn = document.getElementById('btn-horiz-' + t);
+                if (btn) btn.classList.toggle('activo', t === filtro);
+            });
+            refrescarGraficaHorizontal();
+        }
+
+        // 1. Botón Insulina (Activar / Desactivar)
+        function toggleInsulinaHorizontal() {
+            insulinaHorizontalActiva = !insulinaHorizontalActiva;
+            const btnI = document.getElementById('filtro-flotante-insulina');
+            if (btnI) btnI.classList.toggle('activo', insulinaHorizontalActiva);
+            refrescarGraficaHorizontal();
+        }
+
+        // 2. Botón Factores (Abrir / Cerrar Menú)
+        function toggleMenuFactoresHorizontal() {
+            const menu = document.getElementById('menu-factores-desplegable');
+            if (!menu) return;
+            
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                cargarListaFactores(); 
+                menu.style.display = 'block';
+            } else {
+                menu.style.display = 'none';
+            }
+        }
+
+                // 3. Generar la lista dinámica de factores reales (Versión Caza-Todo)
+
+
+
+        // --- CARGA DINÁMICA DE FACTORES EN EL DESPLEGABLE HORIZONTAL ---
+function cargarListaFactores() {
+    const menu = document.getElementById('menu-factores-horizontal');
+    if (!menu) return;
+
+    // Usamos KEY_GLUCOSA si existe para mantener coherencia con refrescarGraficaHorizontal
+    const keyStorage = typeof KEY_GLUCOSA !== 'undefined' ? KEY_GLUCOSA : 'misRegistros_v3';
+    const rawData = localStorage.getItem(keyStorage);
+
+    if (!rawData) {
+        menu.innerHTML = '<div style="padding:10px; color:#888; text-align:center; font-size:12px;">Sin factores registrados</div>';
+        return;
+    }
+
+    try {
+        const registros = JSON.parse(rawData);
+        const factoresUnicos = new Set();
+
+        registros.forEach(r => {
+            const tipo = (r.tipo || '').toLowerCase();
+            const detalle = r.detalles || r.factor || r.evento || r.nota || '';
+
+            if (tipo !== 'glucosa' && tipo !== 'insulina' && detalle) {
+                factoresUnicos.add(detalle.trim());
+            } else if (tipo && tipo !== 'glucosa' && tipo !== 'insulina') {
+                factoresUnicos.add(tipo.trim());
+            }
+        });
+
+        if (factoresUnicos.size === 0) {
+            menu.innerHTML = '<div style="padding:10px; color:#888; text-align:center; font-size:12px;">Sin factores en el historial</div>';
+            return;
+        }
+
+        let html = `
+            <div class="item-factor" onclick="seleccionarFactorHorizontal(null)" style="padding:8px 12px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.1); color:#FF5252; font-weight:bold;">
+                ✖ Desactivar filtro
+            </div>
+        `;
+
+        factoresUnicos.forEach(factor => {
+            const esActivo = factorHorizontalSeleccionado === factor;
+            const estiloActivo = esActivo ? 'background: rgba(255,82,82,0.2); font-weight:bold;' : '';
+            
+            // Escapamos comillas simples para evitar romper el evento onclick inline
+            const factorEscapado = factor.replace(/'/g, "\\'");
+
+            html += `
+                <div class="item-factor" onclick="seleccionarFactorHorizontal('${factorEscapado}')" style="padding:8px 12px; cursor:pointer; ${estiloActivo}">
+                    📌 ${factor}
+                </div>
+            `;
+        });
+
+        menu.innerHTML = html;
+    } catch (e) {
+        console.error("Error al poblar la lista de factores:", e);
+    }
+}
+
+// --- GESTIÓN DE SELECCIÓN DE FACTOR Y REFRESCO DE LA GRÁFICA ---
+function seleccionarFactorHorizontal(factor) {
+    factorHorizontalSeleccionado = factor;
+    
+    const btnF = document.getElementById('btn-factor-h');
+    if (btnF) {
+        if (factor) {
+            btnF.classList.add('activo');
+            btnF.style.background = '#FF5252';
+            btnF.style.color = '#FFF';
+        } else {
+            btnF.classList.remove('activo');
+            btnF.style.background = '';
+            btnF.style.color = '';
+        }
+    }
+
+    const menu = document.getElementById('menu-factores-horizontal');
+    if (menu) menu.style.display = 'none';
+
+    if (typeof refrescarGraficaHorizontal === 'function') {
+        refrescarGraficaHorizontal();
+    } else if (typeof actualizarInterfaz === 'function') {
+        actualizarInterfaz();
+    }
+}
+
+// --- REFRESCO DE LA GRÁFICA ---
+function refrescarGraficaHorizontal() {
+    const keyStorage = typeof KEY_GLUCOSA !== 'undefined' ? KEY_GLUCOSA : 'misRegistros_v3';
+    const todosLosRegs = JSON.parse(localStorage.getItem(keyStorage) || '[]');
+    
+    let datosParaGrafica = filtrarRegistros(todosLosRegs, filtroTiempoHorizontal, 'Todo');
+    let datosFinales = [];
+
+    // 1. Glucosa
+    const soloGlucosa = datosParaGrafica.filter(r => (r.valor !== undefined && r.valor !== null) && (!r.tipo || r.tipo === 'glucosa' || r.tipo === 'G'));
+    datosFinales = [...soloGlucosa];
+
+    // 2. Insulina
+    if (insulinaHorizontalActiva) {
+        const soloInsulina = datosParaGrafica.filter(r => r.tipo === 'insulina' || r.tipo === 'I' || r.dosis !== undefined);
+        datosFinales = [...datosFinales, ...soloInsulina];
+    }
+    
+    // 3. Factores (Misma lógica de búsqueda flexible que en cargarListaFactores)
+    if (factorHorizontalSeleccionado) {
+        const soloFactores = datosParaGrafica.filter(r => {
+            const detalle = (r.detalles || r.factor || r.evento || r.nota || r.tipo || '').trim();
+            return detalle === factorHorizontalSeleccionado;
+        });
+        datosFinales = [...datosFinales, ...soloFactores];
+    }
+    
+    // Siempre llamamos a renderizarGrafica para que si el array está vacío, limpie el lienzo
+    renderizarGrafica(datosFinales);
+}
+
+
+
+
 
         document.addEventListener('DOMContentLoaded', () => {
             const API_KEY = 'ef660e654281f681e0c643a10c9407ab';
